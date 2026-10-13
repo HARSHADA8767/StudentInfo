@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .report-cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .report-card {
+            background: #ecfdf5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .report-card h3 {
+            margin-top: 0;
+        }
+
+        .report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .report-actions button {
+            padding: 11px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #059669;
+            color: white;
+            cursor: pointer;
+        }
+
+        .report-actions button:hover {
+            background: #047857;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: #d1fae5;
+        }
+
+        #search {
+            width: 100%;
+            max-width: 400px;
+            padding: 11px;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 700px) {
+            .report-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* PDF / Print styling */
+        @media print {
+            .topbar,
+            .sidebar,
+            .report-actions,
+            #search,
+            #message,
+            #emptyMessage {
+                display: none !important;
+            }
+
+            body,
+            .layout,
+            .content {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 8px !important;
+                width: auto !important;
+                display: block !important;
+            }
+
+            .report-cards {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .report-card,
+            .panel {
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+                border: 1px solid #cccccc;
+                break-inside: avoid;
+            }
+
+            h1, h2, h3, p, td, th {
+                color: black !important;
+            }
+
+            th {
+                background: #d1fae5 !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            table {
+                width: 100%;
+                font-size: 9px;
+            }
+
+            th, td {
+                padding: 6px;
+                overflow-wrap: anywhere;
+            }
+
+            .table-wrap {
+                overflow: visible;
+            }
+
+            @page {
+                size: landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+        <h2>🎓 StudentInfo</h2>
+    </header>
+
+    <div class="layout">
+
+        <aside class="sidebar">
+            <h3>Student Management</h3>
+            <a href="index.html">Dashboard</a>
+            <a href="student-registration.html">Student Registration</a>
+            <a href="student-list.html">Student Listing</a>
+            <a href="academic-records.html">Academic Records</a>
+            <a href="attendance-records.html">Attendance Records</a>
+            <a href="fee-management.html">Fee Management</a>
+            <a href="student-documents.html">Student Documents</a>
+            <a href="reports.html">Reports</a>
+            <a href="student-id-card.html">Student ID Card</a>
+        </aside>
+
+        <main class="content">
+
+            <h1>Reports &amp; Analytics</h1>
+            <p>View student information and export reports.</p>
+
+            <div class="report-cards">
+
+                <div class="report-card">
+                    <h3>Total Students</h3>
+                    <h2 id="studentCount">0</h2>
+                </div>
+
+                <div class="report-card">
+                    <h3>Academic Records</h3>
+                    <h2 id="academicCount">0</h2>
+                </div>
+
+                <div class="report-card">
+                    <h3>Attendance Records</h3>
+                    <h2 id="attendanceCount">0</h2>
+                </div>
+
+                <div class="report-card">
+                    <h3>Fee Records</h3>
+                    <h2 id="feeCount">0</h2>
+                </div>
+
+                <div class="report-card">
+                    <h3>Documents</h3>
+                    <h2 id="documentCount">0</h2>
+                </div>
+
+                <div class="report-card">
+                    <h3>Fees Pending</h3>
+                    <h2 id="pendingFees">₹0</h2>
+                </div>
+
+            </div>
+
+            <section class="panel">
+                <h2>Export Reports</h2>
+                <p>Download CSV files or save the report as PDF.</p>
+
+                <div class="report-actions">
+                    <button type="button" onclick="exportStudents()">
+                        Export Students CSV
+                    </button>
+
+                    <button type="button" onclick="exportAcademic()">
+                        Export Academic CSV
+                    </button>
+
+                    <button type="button" onclick="exportAttendance()">
+                        Export Attendance CSV
+                    </button>
+
+                    <button type="button" onclick="exportFees()">
+                        Export Fees CSV
+                    </button>
+
+                    <button type="button" onclick="exportDocuments()">
+                        Export Documents CSV
+                    </button>
+
+                    <button type="button" onclick="exportPDF()">
+                        📄 Print / Save Reports as PDF
+                    </button>
+                </div>
+
+                <p id="message" role="status"></p>
+            </section>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Student Report</h2>
+
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Search by roll number or name..."
+                    aria-label="Search students"
+                >
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Roll Number</th>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Course</th>
+                                <th>Year</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="studentTable"></tbody>
+                    </table>
+                </div>
+
+                <p id="emptyMessage">No student records found.</p>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        function getStoredRecords(key) {
+            try {
+                const records = JSON.parse(
+                    localStorage.getItem(key) || "[]"
+                );
+
+                return Array.isArray(records) ? records : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        const students = getStoredRecords("students");
+        const academics = getStoredRecords("academicRecords");
+        const attendance = getStoredRecords("attendanceRecords");
+        const fees = getStoredRecords("feeRecords");
+        const documents = getStoredRecords("studentDocuments");
+
+        document.getElementById("studentCount").textContent =
+            students.length;
+
+        document.getElementById("academicCount").textContent =
+            academics.length;
+
+        document.getElementById("attendanceCount").textContent =
+            attendance.length;
+
+        document.getElementById("feeCount").textContent =
+            fees.length;
+
+        document.getElementById("documentCount").textContent =
+            documents.length;
+
+        const pending = fees.reduce(function(sum, record) {
+            return sum + Number(record.remainingAmount || 0);
+        }, 0);
+
+        document.getElementById("pendingFees").textContent =
+            "₹" + pending.toLocaleString("en-IN");
+
+        const table = document.getElementById("studentTable");
+        const search = document.getElementById("search");
+
+        function renderStudents() {
+            const query = search.value.trim().toLowerCase();
+
+            const filtered = students.filter(function(student) {
+                return (
+                    String(student.rollNo || "")
+                        .toLowerCase().includes(query) ||
+                    String(student.fullName || "")
+                        .toLowerCase().includes(query)
+                );
+            });
+
+            table.innerHTML = "";
+
+            document.getElementById("emptyMessage").style.display =
+                filtered.length ? "none" : "block";
+
+            filtered.forEach(function(student) {
+                const row = document.createElement("tr");
+
+                [
+                    student.rollNo,
+                    student.fullName,
+                    student.email,
+                    student.department,
+                    student.course,
+                    student.year,
+                    student.status || "Active"
+                ].forEach(function(value) {
+                    const cell = document.createElement("td");
+                    cell.textContent = value || "-";
+                    row.appendChild(cell);
+                });
+
+                table.appendChild(row);
+            });
+        }
+
+        function downloadCSV(filename, headers, rows) {
+            function escapeCSV(value) {
+                let text = String(value ?? "");
+
+                // Reduce spreadsheet formula injection risk.
+                if (/^[\t\r\n ]*[=+\-@]/.test(text)) {
+                    text = "'" + text;
+                }
+
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+
+            const csv = [
+                headers.map(escapeCSV).join(","),
+                ...rows.map(function(row) {
+                    return row.map(escapeCSV).join(",");
+                })
+            ].join("\r\n");
+
+            const blob = new Blob(
+                ["\uFEFF" + csv],
+                { type: "text/csv;charset=utf-8;" }
+            );
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 1000);
+
+            document.getElementById("message").textContent =
+                filename + " download started.";
+        }
+
+        function exportStudents() {
+            downloadCSV(
+                "students-report.csv",
+                [
+                    "Roll Number", "Name", "Email", "Phone",
+                    "Department", "Course", "Year", "Status"
+                ],
+                students.map(function(s) {
+                    return [
+                        s.rollNo, s.fullName, s.email, s.phone,
+                        s.department, s.course, s.year, s.status
+                    ];
+                })
+            );
+        }
+
+        function exportAcademic() {
+            downloadCSV(
+                "academic-report.csv",
+                [
+                    "Roll Number", "Subject", "Semester",
+                    "Exam Type", "Marks", "Total Marks",
+                    "Percentage", "Grade"
+                ],
+                academics.map(function(a) {
+                    return [
+                        a.rollNo, a.subject, a.semester, a.examType,
+                        a.marks, a.totalMarks, a.percentage, a.grade
+                    ];
+                })
+            );
+        }
+
+        function exportAttendance() {
+            downloadCSV(
+                "attendance-report.csv",
+                ["Roll Number", "Subject", "Date", "Status"],
+                attendance.map(function(a) {
+                    return [a.rollNo, a.subject, a.date, a.status];
+                })
+            );
+        }
+
+        function exportFees() {
+            downloadCSV(
+                "fees-report.csv",
+                [
+                    "Roll Number", "Total Fees", "Paid Amount",
+                    "Remaining Amount", "Status",
+                    "Payment Date", "Payment Mode"
+                ],
+                fees.map(function(f) {
+                    return [
+                        f.rollNo, f.totalAmount, f.paidAmount,
+                        f.remainingAmount, f.status,
+                        f.paymentDate, f.paymentMode
+                    ];
+                })
+            );
+        }
+
+        function exportDocuments() {
+            downloadCSV(
+                "documents-report.csv",
+                [
+                    "Roll Number", "Document Type",
+                    "File Name", "Status", "Uploaded On"
+                ],
+                documents.map(function(d) {
+                    return [
+                        d.rollNo, d.documentType, d.fileName,
+                        d.status, d.uploadedOn
+                    ];
+                })
+            );
+        }
+
+        function exportPDF() {
+            document.getElementById("message").textContent = "";
+            window.print();
+        }
+
+        search.addEventListener("input", renderStudents);
+        renderStudents();
+    </script>
+
+</body>
+</html>

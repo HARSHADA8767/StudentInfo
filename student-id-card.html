@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ID Card - StudentInfo</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0fdf4;
+            margin: 0;
+            padding: 25px;
+        }
+
+        .page-container {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #059669;
+            text-align: center;
+        }
+
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #00000012;
+            margin: 25px 0;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 7px;
+            border: 1px solid #d1d5db;
+            font-size: 15px;
+        }
+
+        button {
+            background: #059669;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #047857;
+        }
+
+        .id-card {
+            display: none;
+            width: 340px;
+            max-width: 100%;
+            margin: 30px auto;
+            background: white;
+            border: 2px solid #059669;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 18px #00000018;
+            text-align: center;
+        }
+
+        .card-header {
+            background: #059669;
+            color: white;
+            padding: 18px 10px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        .card-header p {
+            margin: 6px 0 0;
+            font-size: 13px;
+        }
+
+        .student-avatar {
+            width: 75px;
+            height: 75px;
+            margin: 20px auto 10px;
+            border-radius: 50%;
+            background: #d1fae5;
+            color: #047857;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .student-name {
+            font-size: 21px;
+            color: #065f46;
+            margin: 8px;
+        }
+
+        .student-details {
+            text-align: left;
+            padding: 10px 22px 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+        }
+
+        .student-details strong {
+            color: #047857;
+        }
+
+        .card-footer {
+            background: #d1fae5;
+            padding: 10px;
+            color: #065f46;
+            font-size: 12px;
+        }
+
+        .print-button {
+            max-width: 340px;
+            display: block;
+            margin: 15px auto;
+        }
+
+        #message {
+            text-align: center;
+            color: #b91c1c;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            body * {
+                visibility: hidden;
+            }
+
+            #studentCard, #studentCard * {
+                visibility: visible;
+            }
+
+            #studentCard {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                margin: 0;
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .search-box, h1, #message, .print-button {
+                display: none !important;
+            }
+
+            @page {
+                margin: 12mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <h1>🎓 Student ID Card Generator</h1>
+
+    <div class="search-box">
+        <label for="studentSelect">Select Student Roll Number</label>
+
+        <select id="studentSelect">
+            <option value="">-- Select a student --</option>
+        </select>
+
+        <button type="button" onclick="generateIDCard()">
+            Generate ID Card
+        </button>
+    </div>
+
+    <p id="message"></p>
+
+    <div class="id-card" id="studentCard">
+        <div class="card-header">
+            <h2>StudentInfo</h2>
+            <p>STUDENT IDENTITY CARD</p>
+        </div>
+
+        <div class="student-avatar" id="avatar">S</div>
+
+        <h3 class="student-name" id="cardName">Student Name</h3>
+
+        <div class="student-details">
+            <div><strong>Roll No:</strong> <span id="cardRoll"></span></div>
+            <div><strong>Department:</strong> <span id="cardDepartment"></span></div>
+            <div><strong>Course:</strong> <span id="cardCourse"></span></div>
+            <div><strong>Year:</strong> <span id="cardYear"></span></div>
+            <div><strong>Email:</strong> <span id="cardEmail"></span></div>
+            <div><strong>Phone:</strong> <span id="cardPhone"></span></div>
+        </div>
+
+        <div class="card-footer">
+            STUDENT ID CARD • StudentInfo
+        </div>
+    </div>
+
+    <button
+        type="button"
+        class="print-button"
+        id="printButton"
+        style="display:none;"
+        onclick="window.print()">
+        🖨️ Print / Save as PDF
+    </button>
+
+</div>
+
+<script>
+    const studentSelect = document.getElementById("studentSelect");
+    const message = document.getElementById("message");
+    const studentCard = document.getElementById("studentCard");
+    const printButton = document.getElementById("printButton");
+
+    let students = [];
+
+    function loadStudents() {
+        try {
+            students = JSON.parse(localStorage.getItem("students")) || [];
+        } catch (error) {
+            students = [];
+        }
+
+        studentSelect.innerHTML =
+            '<option value="">-- Select a student --</option>';
+
+        students.forEach(function(student) {
+            const option = document.createElement("option");
+            option.value = student.rollNo;
+            option.textContent =
+                student.rollNo + " - " + student.fullName;
+            studentSelect.appendChild(option);
+        });
+
+        if (students.length === 0) {
+            message.textContent =
+                "No students found. Please register a student first.";
+        } else {
+            message.textContent = "";
+        }
+    }
+
+    function generateIDCard() {
+        const selectedRoll = studentSelect.value;
+
+        if (!selectedRoll) {
+            message.textContent = "Please select a student first.";
+            studentCard.style.display = "none";
+            printButton.style.display = "none";
+            return;
+        }
+
+        const student = students.find(function(item) {
+            return String(item.rollNo) === String(selectedRoll);
+        });
+
+        if (!student) {
+            message.textContent = "Student record not found.";
+            return;
+        }
+
+        document.getElementById("cardName").textContent =
+            student.fullName || "Not provided";
+
+        document.getElementById("cardRoll").textContent =
+            student.rollNo || "Not provided";
+
+        document.getElementById("cardDepartment").textContent =
+            student.department || "Not provided";
+
+        document.getElementById("cardCourse").textContent =
+            student.course || "Not provided";
+
+        document.getElementById("cardYear").textContent =
+            student.year || "Not provided";
+
+        document.getElementById("cardEmail").textContent =
+            student.email || "Not provided";
+
+        document.getElementById("cardPhone").textContent =
+            student.phone || "Not provided";
+
+        const initials = (student.fullName || "S")
+            .trim()
+            .split(/\s+/)
+            .map(function(part) {
+                return part.charAt(0);
+            })
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+
+        document.getElementById("avatar").textContent = initials;
+
+        studentCard.style.display = "block";
+        printButton.style.display = "block";
+        message.textContent = "";
+    }
+
+    loadStudents();
+</script>
+
+</body>
+</html>

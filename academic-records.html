@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Records - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .academic-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .academic-form input,
+        .academic-form select {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .academic-form button,
+        .delete-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .academic-form button {
+            background: #059669;
+            color: white;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: #d1fae5;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        #message {
+            margin-top: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .academic-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <h2>🎓 StudentInfo</h2>
+    <span>Student Information System</span>
+</header>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <h3>MAIN MENU</h3>
+        <a href="index.html">Dashboard</a>
+        <a href="student-profile.html">Student Profile</a>
+        <a href="student-registration.html">Student Registration</a>
+        <a href="student-list.html">Student Listing</a>
+        <a href="academic-records.html" class="active">Academic Records</a>
+        <a href="attendance-records.html">Attendance Records</a>
+        <a href="fee-management.html">Fee Management</a>
+        <a href="student-documents.html">Student Documents</a>
+        <a href="reports.html">Reports</a>
+        <a href="student-id-card.html">Student ID Card</a>
+    </aside>
+
+    <main class="content">
+
+        <h1>Academic Records</h1>
+        <p class="subtitle">Add and manage student marks and grades.</p>
+
+        <section class="panel">
+            <h2>Add Academic Record</h2>
+
+            <form id="academicForm" class="academic-form">
+
+                <div>
+                    <label for="rollNo">Student Roll Number</label>
+                    <input id="rollNo" required
+                           placeholder="Enter registered roll number">
+                </div>
+
+                <div>
+                    <label for="subject">Subject</label>
+                    <input id="subject" required
+                           placeholder="e.g. Java Programming">
+                </div>
+
+                <div>
+                    <label for="semester">Semester</label>
+                    <select id="semester" required>
+                        <option value="">Select Semester</option>
+                        <option>Semester 1</option>
+                        <option>Semester 2</option>
+                        <option>Semester 3</option>
+                        <option>Semester 4</option>
+                        <option>Semester 5</option>
+                        <option>Semester 6</option>
+                        <option>Semester 7</option>
+                        <option>Semester 8</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="examType">Exam Type</label>
+                    <select id="examType" required>
+                        <option value="">Select Exam</option>
+                        <option>Internal</option>
+                        <option>Mid-Term</option>
+                        <option>Final</option>
+                        <option>Practical</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="marks">Marks Obtained</label>
+                    <input id="marks" type="number" min="0"
+                           max="100" required placeholder="0 to 100">
+                </div>
+
+                <div>
+                    <label for="totalMarks">Total Marks</label>
+                    <input id="totalMarks" type="number" min="1"
+                           max="1000" value="100" required>
+                </div>
+
+                <div>
+                    <button type="submit">Save Record</button>
+                </div>
+
+            </form>
+
+            <p id="message" role="status"></p>
+        </section>
+
+        <section class="panel" style="margin-top: 24px;">
+            <h2>Academic Records List</h2>
+
+            <input
+                id="search"
+                placeholder="Search by roll number or subject..."
+                style="width:100%;max-width:400px;padding:11px;box-sizing:border-box;"
+            >
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Roll No.</th>
+                            <th>Subject</th>
+                            <th>Semester</th>
+                            <th>Exam</th>
+                            <th>Marks</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTable"></tbody>
+                </table>
+            </div>
+
+            <p id="emptyMessage">No academic records added yet.</p>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    const form = document.getElementById("academicForm");
+    const message = document.getElementById("message");
+    const table = document.getElementById("recordsTable");
+    const search = document.getElementById("search");
+    const emptyMessage = document.getElementById("emptyMessage");
+
+    function getStoredRecords(key) {
+        try {
+            const data = JSON.parse(localStorage.getItem(key) || "[]");
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    let records = getStoredRecords("academicRecords");
+
+    function getGrade(percentage) {
+        if (percentage >= 90) return "A+";
+        if (percentage >= 80) return "A";
+        if (percentage >= 70) return "B";
+        if (percentage >= 60) return "C";
+        if (percentage >= 40) return "D";
+        return "F";
+    }
+
+    function renderRecords() {
+        const query = search.value.trim().toLowerCase();
+
+        const filtered = records.filter(record =>
+            String(record.rollNo || "").toLowerCase().includes(query) ||
+            String(record.subject || "").toLowerCase().includes(query)
+        );
+
+        table.innerHTML = "";
+
+        emptyMessage.style.display = filtered.length ? "none" : "block";
+        emptyMessage.textContent = query
+            ? "No matching academic records found."
+            : "No academic records added yet.";
+
+        filtered.forEach(record => {
+            const row = document.createElement("tr");
+
+            const values = [
+                record.rollNo,
+                record.subject,
+                record.semester,
+                record.examType,
+                `${record.marks}/${record.totalMarks}`,
+                `${Number(record.percentage || 0).toFixed(2)}%`,
+                record.grade
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+            });
+
+            const actionCell = document.createElement("td");
+            const deleteButton = document.createElement("button");
+
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete-btn";
+
+            deleteButton.addEventListener("click", () => {
+                if (confirm("Delete this academic record?")) {
+                    records = records.filter(item => item.id !== record.id);
+
+                    localStorage.setItem(
+                        "academicRecords",
+                        JSON.stringify(records)
+                    );
+
+                    renderRecords();
+                    message.textContent = "Academic record deleted.";
+                    message.style.color = "#047857";
+                }
+            });
+
+            actionCell.appendChild(deleteButton);
+            row.appendChild(actionCell);
+            table.appendChild(row);
+        });
+    }
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const rollNo = document.getElementById("rollNo").value.trim();
+        const subject = document.getElementById("subject").value.trim();
+        const semester = document.getElementById("semester").value;
+        const examType = document.getElementById("examType").value;
+        const marks = Number(document.getElementById("marks").value);
+        const totalMarks = Number(document.getElementById("totalMarks").value);
+
+        const students = getStoredRecords("students");
+
+        const studentExists = students.some(student =>
+            String(student.rollNo || "").trim().toLowerCase() ===
+            rollNo.toLowerCase()
+        );
+
+        if (!studentExists) {
+            message.textContent =
+                "Student not found. Please enter a registered roll number.";
+            message.style.color = "#dc2626";
+            return;
+        }
+
+        if (
+            !subject ||
+            !semester ||
+            !examType ||
+            totalMarks <= 0 ||
+            marks < 0 ||
+            marks > totalMarks
+        ) {
+            message.textContent =
+                "Please check the details and enter valid marks.";
+            message.style.color = "#dc2626";
+            return;
+        }
+
+        const percentage = (marks / totalMarks) * 100;
+
+        const record = {
+            id: Date.now().toString(),
+            rollNo,
+            subject,
+            semester,
+            examType,
+            marks,
+            totalMarks,
+            percentage,
+            grade: getGrade(percentage)
+        };
+
+        records.push(record);
+
+        localStorage.setItem(
+            "academicRecords",
+            JSON.stringify(records)
+        );
+
+        message.textContent = "Academic record saved successfully!";
+        message.style.color = "#047857";
+
+        form.reset();
+        document.getElementById("totalMarks").value = 100;
+
+        renderRecords();
+    });
+
+    search.addEventListener("input", renderRecords);
+
+    renderRecords();
+</script>
+
+</body>
+</html>

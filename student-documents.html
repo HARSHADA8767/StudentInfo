@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Documents - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .document-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .document-form input,
+        .document-form select {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .document-form button {
+            padding: 11px 18px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th { background: #d1fae5; }
+
+        .delete-btn {
+            padding: 8px 12px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #message { margin-top: 12px; }
+
+        @media (max-width: 600px) {
+            .document-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <h2>🎓 StudentInfo</h2>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h3>Student Management</h3>
+            <a href="index.html">Dashboard</a>
+            <a href="student-registration.html">Student Registration</a>
+            <a href="student-list.html">Student Listing</a>
+            <a href="academic-records.html">Academic Records</a>
+            <a href="attendance-records.html">Attendance Records</a>
+            <a href="fee-management.html">Fee Management</a>
+            <a href="student-documents.html">Student Documents</a>
+        </aside>
+
+        <main class="content">
+            <h1>Student Documents</h1>
+            <p>Upload and manage student documents.</p>
+
+            <section class="panel">
+                <h2>Add Student Document</h2>
+
+                <form id="documentForm" class="document-form">
+                    <div>
+                        <label for="rollNo">Student Roll Number</label>
+                        <input id="rollNo" required
+                               placeholder="Enter registered roll number">
+                    </div>
+
+                    <div>
+                        <label for="documentType">Document Type</label>
+                        <select id="documentType" required>
+                            <option value="">Select Document</option>
+                            <option>Aadhaar Card</option>
+                            <option>Birth Certificate</option>
+                            <option>10th Marksheet</option>
+                            <option>12th Marksheet</option>
+                            <option>Leaving Certificate</option>
+                            <option>Transfer Certificate</option>
+                            <option>Passport Photo</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="documentFile">Choose Document</label>
+                        <input id="documentFile" type="file"
+                               accept=".pdf,.jpg,.jpeg,.png" required>
+                        <small>Allowed formats: PDF, JPG, PNG. Maximum 2 MB.</small>
+                    </div>
+
+                    <div>
+                        <label for="documentStatus">Document Status</label>
+                        <select id="documentStatus" required>
+                            <option value="Pending">Pending Verification</option>
+                            <option value="Verified">Verified</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <button type="submit">Save Document</button>
+                    </div>
+                </form>
+
+                <p id="message" role="status"></p>
+            </section>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Documents List</h2>
+
+                <input id="search"
+                       placeholder="Search by roll number or document..."
+                       style="width:100%;max-width:400px;padding:11px;box-sizing:border-box;">
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Roll No.</th>
+                                <th>Document Type</th>
+                                <th>File Name</th>
+                                <th>Status</th>
+                                <th>Uploaded On</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTable"></tbody>
+                    </table>
+                </div>
+
+                <p id="emptyMessage">No documents uploaded yet.</p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById("documentForm");
+        const message = document.getElementById("message");
+        const table = document.getElementById("documentsTable");
+        const search = document.getElementById("search");
+        const fileInput = document.getElementById("documentFile");
+
+        // Store document details and file contents in browser storage.
+        let documents = JSON.parse(
+            localStorage.getItem("studentDocuments") || "[]"
+        );
+
+        function renderDocuments() {
+            const query = search.value.trim().toLowerCase();
+
+            const filtered = documents.filter(doc =>
+                doc.rollNo.toLowerCase().includes(query) ||
+                doc.documentType.toLowerCase().includes(query) ||
+                doc.fileName.toLowerCase().includes(query)
+            );
+
+            table.innerHTML = "";
+
+            document.getElementById("emptyMessage").style.display =
+                filtered.length ? "none" : "block";
+
+            filtered.forEach(doc => {
+                const row = document.createElement("tr");
+
+                [doc.rollNo, doc.documentType, doc.fileName,
+                 doc.status, doc.uploadedOn].forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const actionCell = document.createElement("td");
+
+                const viewButton = document.createElement("button");
+                viewButton.textContent = "View";
+                viewButton.style.cssText =
+                    "padding:8px;margin-right:6px;background:#d1fae5;border:0;border-radius:5px;cursor:pointer;";
+
+                viewButton.addEventListener("click", () => {
+                    const link = document.createElement("a");
+                    link.href = doc.fileData;
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    link.click();
+                });
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.className = "delete-btn";
+
+                deleteButton.addEventListener("click", () => {
+                    if (confirm("Delete this document record?")) {
+                        documents = documents.filter(
+                            item => item.id !== doc.id
+                        );
+
+                        try {
+                            localStorage.setItem(
+                                "studentDocuments",
+                                JSON.stringify(documents)
+                            );
+                            renderDocuments();
+                        } catch (error) {
+                            message.textContent =
+                                "Unable to update browser storage.";
+                            message.style.color = "#dc2626";
+                        }
+                    }
+                });
+
+                actionCell.append(viewButton, deleteButton);
+                row.appendChild(actionCell);
+                table.appendChild(row);
+            });
+        }
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const rollNo = document.getElementById("rollNo").value.trim();
+            const documentType =
+                document.getElementById("documentType").value;
+            const status =
+                document.getElementById("documentStatus").value;
+            const file = fileInput.files[0];
+
+            const students = JSON.parse(
+                localStorage.getItem("students") || "[]"
+            );
+
+            const studentExists = students.some(student =>
+                student.rollNo.toLowerCase() === rollNo.toLowerCase()
+            );
+
+            if (!studentExists) {
+                message.textContent =
+                    "Student not found. Please register the student first.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            if (!file) {
+                message.textContent = "Please select a document.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                message.textContent =
+                    "File is too large. Maximum size is 2 MB.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            const allowedTypes = [
+                "application/pdf",
+                "image/jpeg",
+                "image/png"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                message.textContent =
+                    "Please select a PDF, JPG, or PNG file.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function() {
+                const record = {
+                    id: Date.now().toString(),
+                    rollNo,
+                    documentType,
+                    fileName: file.name,
+                    fileData: reader.result,
+                    status,
+                    uploadedOn: new Date().toLocaleDateString("en-IN")
+                };
+
+                try {
+                    const updatedDocuments = [...documents, record];
+
+                    localStorage.setItem(
+                        "studentDocuments",
+                        JSON.stringify(updatedDocuments)
+                    );
+
+                    documents = updatedDocuments;
+
+                    message.textContent = "Document saved successfully!";
+                    message.style.color = "#047857";
+
+                    form.reset();
+                    renderDocuments();
+                } catch (error) {
+                    message.textContent =
+                        "Browser storage is full. Try a smaller file or remove old documents.";
+                    message.style.color = "#dc2626";
+                }
+            };
+
+            reader.onerror = function() {
+                message.textContent = "Could not read the selected file.";
+                message.style.color = "#dc2626";
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        search.addEventListener("input", renderDocuments);
+
+        renderDocuments();
+    </script>
+</body>
+</html>

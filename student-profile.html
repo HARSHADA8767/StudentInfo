@@ -1,0 +1,108 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h2>StudentInfo</h2>
+    <span>Student Information System</span>
+</header>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <h3>MAIN MENU</h3>
+
+        <a href="index.html">Dashboard</a>
+        <a href="student-registration.html">Student Registration</a>
+        <a href="student-list.html">Student Listing</a>
+        <a href="student-profile.html" class="active">Student Profile</a>
+        <a href="academic-records.html">Academic Records</a>
+        <a href="attendance-records.html">Attendance Records</a>
+        <a href="fee-management.html">Fee Management</a>
+        <a href="student-documents.html">Student Documents</a>
+        <a href="reports.html">Reports</a>
+        <a href="student-id-card.html">Student ID Card</a>
+    </aside>
+
+    <main class="content">
+
+        <h1>Student Profile</h1>
+        <p class="subtitle">View complete student information.</p>
+
+        <section class="panel" id="profileContainer">
+            <h2 id="studentName">Student Details</h2>
+            <p id="profileMessage"></p>
+
+            <div class="profile-grid" id="profileDetails"></div>
+
+            <div class="form-actions">
+                <a href="student-list.html" class="add-btn">
+                    Back to Student List
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const rollNo = params.get("roll");
+
+const students = JSON.parse(
+    localStorage.getItem("students") || "[]"
+);
+
+const student = students.find(
+    item => String(item.rollNo) === String(rollNo)
+);
+
+const profileMessage = document.getElementById("profileMessage");
+const profileDetails = document.getElementById("profileDetails");
+const studentName = document.getElementById("studentName");
+
+if (!student) {
+    profileMessage.textContent =
+        "Student not found. Please select a student from the listing page.";
+} else {
+    studentName.textContent = student.fullName;
+
+    const fields = [
+        ["Roll Number", student.rollNo],
+        ["Email", student.email],
+        ["Phone Number", student.phone],
+        ["Date of Birth", student.dob],
+        ["Gender", student.gender],
+        ["Department", student.department],
+        ["Course", student.course],
+        ["Academic Year", student.year],
+        ["Address", student.address],
+        ["Status", student.status || "Active"]
+    ];
+
+    fields.forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "profile-item";
+
+        const heading = document.createElement("strong");
+        heading.textContent = label;
+
+        const detail = document.createElement("p");
+        detail.textContent = value || "-";
+
+        card.append(heading, detail);
+        profileDetails.appendChild(card);
+    });
+}
+</script>
+
+</body>
+</html>

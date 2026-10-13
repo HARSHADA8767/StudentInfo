@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Records - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .attendance-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .attendance-form input,
+        .attendance-form select {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .attendance-form button {
+            padding: 11px 18px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: #d1fae5;
+        }
+
+        .delete-btn {
+            padding: 8px 12px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #message {
+            margin-top: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .attendance-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <h2>🎓 StudentInfo</h2>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h3>Student Management</h3>
+            <a href="index.html">Dashboard</a>
+            <a href="student-registration.html">Student Registration</a>
+            <a href="student-list.html">Student Listing</a>
+            <a href="academic-records.html">Academic Records</a>
+            <a href="attendance-records.html">Attendance Records</a>
+        </aside>
+
+        <main class="content">
+            <h1>Attendance Records</h1>
+            <p>Record and manage student attendance.</p>
+
+            <section class="panel">
+                <h2>Mark Attendance</h2>
+
+                <form id="attendanceForm" class="attendance-form">
+                    <div>
+                        <label for="rollNo">Student Roll Number</label>
+                        <input
+                            id="rollNo"
+                            required
+                            placeholder="Enter registered roll number"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="subject">Subject</label>
+                        <input
+                            id="subject"
+                            required
+                            placeholder="e.g. Java Programming"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="attendanceDate">Attendance Date</label>
+                        <input id="attendanceDate" type="date" required>
+                    </div>
+
+                    <div>
+                        <label for="status">Attendance Status</label>
+                        <select id="status" required>
+                            <option value="">Select Status</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <button type="submit">Save Attendance</button>
+                    </div>
+                </form>
+
+                <p id="message" role="status"></p>
+            </section>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Attendance History</h2>
+
+                <input
+                    id="search"
+                    placeholder="Search by roll number or subject..."
+                    style="width:100%;max-width:400px;padding:11px;box-sizing:border-box;"
+                >
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Roll No.</th>
+                                <th>Subject</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTable"></tbody>
+                    </table>
+                </div>
+
+                <p id="emptyMessage">No attendance records available.</p>
+            </section>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Attendance Summary</h2>
+                <p>Total Records: <strong id="totalRecords">0</strong></p>
+                <p>Present: <strong id="presentCount">0</strong></p>
+                <p>Absent: <strong id="absentCount">0</strong></p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById("attendanceForm");
+        const message = document.getElementById("message");
+        const table = document.getElementById("attendanceTable");
+        const search = document.getElementById("search");
+
+        let attendance = JSON.parse(
+            localStorage.getItem("attendanceRecords") || "[]"
+        );
+
+        // Set today's date automatically
+        document.getElementById("attendanceDate").value =
+            new Date().toLocaleDateString("en-CA");
+
+        function renderAttendance() {
+            const query = search.value.trim().toLowerCase();
+
+            const filtered = attendance.filter(record =>
+                record.rollNo.toLowerCase().includes(query) ||
+                record.subject.toLowerCase().includes(query)
+            );
+
+            table.innerHTML = "";
+
+            document.getElementById("emptyMessage").style.display =
+                filtered.length ? "none" : "block";
+
+            filtered.forEach(record => {
+                const row = document.createElement("tr");
+
+                [
+                    record.rollNo,
+                    record.subject,
+                    record.date,
+                    record.status
+                ].forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const actionCell = document.createElement("td");
+                const deleteButton = document.createElement("button");
+
+                deleteButton.textContent = "Delete";
+                deleteButton.className = "delete-btn";
+
+                deleteButton.addEventListener("click", () => {
+                    if (confirm("Delete this attendance record?")) {
+                        attendance = attendance.filter(
+                            item => item.id !== record.id
+                        );
+
+                        localStorage.setItem(
+                            "attendanceRecords",
+                            JSON.stringify(attendance)
+                        );
+
+                        renderAttendance();
+                    }
+                });
+
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+                table.appendChild(row);
+            });
+
+            document.getElementById("totalRecords").textContent =
+                attendance.length;
+
+            document.getElementById("presentCount").textContent =
+                attendance.filter(item => item.status === "Present").length;
+
+            document.getElementById("absentCount").textContent =
+                attendance.filter(item => item.status === "Absent").length;
+        }
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const rollNo = document.getElementById("rollNo").value.trim();
+            const subject = document.getElementById("subject").value.trim();
+            const date = document.getElementById("attendanceDate").value;
+            const status = document.getElementById("status").value;
+
+            const students = JSON.parse(
+                localStorage.getItem("students") || "[]"
+            );
+
+            const studentExists = students.some(student =>
+                student.rollNo.toLowerCase() === rollNo.toLowerCase()
+            );
+
+            if (!studentExists) {
+                message.textContent =
+                    "Student not found. Please register the student first.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            const duplicate = attendance.some(record =>
+                record.rollNo.toLowerCase() === rollNo.toLowerCase() &&
+                record.subject.toLowerCase() === subject.toLowerCase() &&
+                record.date === date
+            );
+
+            if (duplicate) {
+                message.textContent =
+                    "Attendance for this student, subject and date already exists.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            const record = {
+                id: Date.now().toString(),
+                rollNo,
+                subject,
+                date,
+                status
+            };
+
+            attendance.push(record);
+
+            localStorage.setItem(
+                "attendanceRecords",
+                JSON.stringify(attendance)
+            );
+
+            message.textContent = "Attendance saved successfully!";
+            message.style.color = "#047857";
+
+            form.reset();
+
+            document.getElementById("attendanceDate").value =
+                new Date().toLocaleDateString("en-CA");
+
+            renderAttendance();
+        });
+
+        search.addEventListener("input", renderAttendance);
+
+        renderAttendance();
+    </script>
+</body>
+</html>

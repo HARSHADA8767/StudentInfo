@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - StudentInfo</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .auth-container {
+            max-width: 430px;
+            margin: 60px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .auth-container h1 {
+            text-align: center;
+            color: #059669;
+            margin-bottom: 8px;
+        }
+
+        .auth-container p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .auth-container label {
+            display: block;
+            margin: 14px 0 6px;
+            font-weight: 600;
+        }
+
+        .auth-container input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 7px;
+            box-sizing: border-box;
+        }
+
+        .auth-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .auth-container button:hover {
+            background: #047857;
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .switch-text a {
+            color: #059669;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <h1>🎓 StudentInfo</h1>
+        <p id="subtitle">Login to your account</p>
+
+        <form id="authForm">
+            <label for="email">Email Address</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                minlength="6"
+                required
+            >
+
+            <button type="submit" id="submitBtn">Login</button>
+        </form>
+
+        <div class="switch-text">
+            <span id="switchLabel">Don't have an account?</span>
+            <a id="switchBtn" href="#">Register</a>
+        </div>
+
+        <div id="message" role="status"></div>
+    </div>
+
+    <script>
+        const authForm = document.getElementById("authForm");
+        const subtitle = document.getElementById("subtitle");
+        const submitBtn = document.getElementById("submitBtn");
+        const switchLabel = document.getElementById("switchLabel");
+        const switchBtn = document.getElementById("switchBtn");
+        const message = document.getElementById("message");
+
+        let isRegister = false;
+
+        switchBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+
+            isRegister = !isRegister;
+            message.textContent = "";
+
+            if (isRegister) {
+                subtitle.textContent = "Create your account";
+                submitBtn.textContent = "Register";
+                switchLabel.textContent = "Already have an account?";
+                switchBtn.textContent = "Login";
+            } else {
+                subtitle.textContent = "Login to your account";
+                submitBtn.textContent = "Login";
+                switchLabel.textContent = "Don't have an account?";
+                switchBtn.textContent = "Register";
+            }
+        });
+
+        authForm.addEventListener("submit", function(event) {
+        alert("Login button is working!");
+            event.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            if (!email || password.length < 6) {
+                message.style.color = "red";
+                message.textContent =
+                    "Please enter a valid email and a password of at least 6 characters.";
+                return;
+            }
+
+            // Frontend demonstration only: no password is stored.
+            sessionStorage.setItem("studentInfoLoggedIn", "true");
+
+            message.style.color = "#059669";
+            message.textContent = isRegister
+                ? "Demo registration successful! Opening dashboard..."
+                : "Demo login successful! Opening dashboard...";
+
+            setTimeout(function() {
+                window.location.href = "index.html";
+            }, 1000);
+        });
+    </script>
+
+</body>
+</html>

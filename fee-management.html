@@ -1,0 +1,384 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Management - StudentInfo</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .fee-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .fee-form input,
+        .fee-form select {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .fee-form button {
+            padding: 11px 18px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th { background: #d1fae5; }
+
+        .delete-btn {
+            padding: 8px 12px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            padding: 18px;
+            background: #ecfdf5;
+            border-radius: 8px;
+        }
+
+        .summary-card h3 { margin-top: 0; }
+
+        #message { margin-top: 12px; }
+
+        @media (max-width: 600px) {
+            .fee-form, .summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <h2>🎓 StudentInfo</h2>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h3>Student Management</h3>
+            <a href="index.html">Dashboard</a>
+            <a href="student-registration.html">Student Registration</a>
+            <a href="student-list.html">Student Listing</a>
+            <a href="academic-records.html">Academic Records</a>
+            <a href="attendance-records.html">Attendance Records</a>
+            <a href="fee-management.html">Fee Management</a>
+        </aside>
+
+        <main class="content">
+            <h1>Fee Management</h1>
+            <p>Manage student fees and payment records.</p>
+
+            <div class="summary">
+                <div class="summary-card">
+                    <h3>Total Fees</h3>
+                    <h2 id="totalFees">₹0</h2>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Fees Collected</h3>
+                    <h2 id="feesCollected">₹0</h2>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Fees Pending</h3>
+                    <h2 id="feesPending">₹0</h2>
+                </div>
+            </div>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Add Fee Record</h2>
+
+                <form id="feeForm" class="fee-form">
+                    <div>
+                        <label for="rollNo">Student Roll Number</label>
+                        <input id="rollNo" required
+                               placeholder="Enter registered roll number">
+                    </div>
+
+                    <div>
+                        <label for="totalAmount">Total Fees (₹)</label>
+                        <input id="totalAmount" type="number"
+                               min="0.01" step="0.01" required
+                               placeholder="e.g. 50000">
+                    </div>
+
+                    <div>
+                        <label for="paidAmount">Amount Paid (₹)</label>
+                        <input id="paidAmount" type="number"
+                               min="0" step="0.01" value="0" required>
+                    </div>
+
+                    <div>
+                        <label for="paymentDate">Payment Date</label>
+                        <input id="paymentDate" type="date" required>
+                    </div>
+
+                    <div>
+                        <label for="paymentMode">Payment Mode</label>
+                        <select id="paymentMode" required>
+                            <option value="">Select Payment Mode</option>
+                            <option>Cash</option>
+                            <option>UPI</option>
+                            <option>Card</option>
+                            <option>Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="notes">Notes (Optional)</label>
+                        <input id="notes" placeholder="e.g. First installment">
+                    </div>
+
+                    <div>
+                        <button type="submit">Save Fee Record</button>
+                    </div>
+                </form>
+
+                <p id="message" role="status"></p>
+            </section>
+
+            <section class="panel" style="margin-top:24px;">
+                <h2>Fee Records</h2>
+
+                <input id="search"
+                       placeholder="Search by roll number..."
+                       style="width:100%;max-width:400px;padding:11px;box-sizing:border-box;">
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Roll No.</th>
+                                <th>Total Fees</th>
+                                <th>Paid</th>
+                                <th>Remaining</th>
+                                <th>Status</th>
+                                <th>Payment Date</th>
+                                <th>Mode</th>
+                                <th>Notes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feeTable"></tbody>
+                    </table>
+                </div>
+
+                <p id="emptyMessage">No fee records available.</p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById("feeForm");
+        const message = document.getElementById("message");
+        const table = document.getElementById("feeTable");
+        const search = document.getElementById("search");
+
+        let feeRecords = JSON.parse(
+            localStorage.getItem("feeRecords") || "[]"
+        );
+
+        document.getElementById("paymentDate").value =
+            new Date().toLocaleDateString("en-CA");
+
+        function getStatus(total, paid) {
+            if (paid >= total) return "Paid";
+            if (paid > 0) return "Partial";
+            return "Pending";
+        }
+
+        function money(amount) {
+            return "₹" + Number(amount).toLocaleString("en-IN", {
+                maximumFractionDigits: 2
+            });
+        }
+
+        function renderFees() {
+            const query = search.value.trim().toLowerCase();
+
+            const filtered = feeRecords.filter(record =>
+                record.rollNo.toLowerCase().includes(query)
+            );
+
+            table.innerHTML = "";
+
+            document.getElementById("emptyMessage").style.display =
+                filtered.length ? "none" : "block";
+
+            filtered.forEach(record => {
+                const row = document.createElement("tr");
+
+                const values = [
+                    record.rollNo,
+                    money(record.totalAmount),
+                    money(record.paidAmount),
+                    money(record.remainingAmount),
+                    record.status,
+                    record.paymentDate,
+                    record.paymentMode,
+                    record.notes || "-"
+                ];
+
+                values.forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const actionCell = document.createElement("td");
+                const deleteButton = document.createElement("button");
+
+                deleteButton.textContent = "Delete";
+                deleteButton.className = "delete-btn";
+
+                deleteButton.addEventListener("click", () => {
+                    if (confirm("Delete this fee record?")) {
+                        feeRecords = feeRecords.filter(
+                            item => item.id !== record.id
+                        );
+
+                        localStorage.setItem(
+                            "feeRecords",
+                            JSON.stringify(feeRecords)
+                        );
+
+                        renderFees();
+                    }
+                });
+
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+                table.appendChild(row);
+            });
+
+            const total = feeRecords.reduce(
+                (sum, record) => sum + record.totalAmount, 0
+            );
+
+            const collected = feeRecords.reduce(
+                (sum, record) => sum + record.paidAmount, 0
+            );
+
+            const pending = feeRecords.reduce(
+                (sum, record) => sum + record.remainingAmount, 0
+            );
+
+            document.getElementById("totalFees").textContent = money(total);
+            document.getElementById("feesCollected").textContent =
+                money(collected);
+            document.getElementById("feesPending").textContent =
+                money(pending);
+        }
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const rollNo = document.getElementById("rollNo").value.trim();
+            const totalAmount = Number(
+                document.getElementById("totalAmount").value
+            );
+            const paidAmount = Number(
+                document.getElementById("paidAmount").value
+            );
+            const paymentDate =
+                document.getElementById("paymentDate").value;
+            const paymentMode =
+                document.getElementById("paymentMode").value;
+            const notes = document.getElementById("notes").value.trim();
+
+            const students = JSON.parse(
+                localStorage.getItem("students") || "[]"
+            );
+
+            const studentExists = students.some(student =>
+                student.rollNo.toLowerCase() === rollNo.toLowerCase()
+            );
+
+            if (!studentExists) {
+                message.textContent =
+                    "Student not found. Please register the student first.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            if (totalAmount <= 0 || paidAmount < 0 ||
+                paidAmount > totalAmount) {
+                message.textContent =
+                    "Enter valid fees. Amount paid cannot exceed total fees.";
+                message.style.color = "#dc2626";
+                return;
+            }
+
+            const record = {
+                id: Date.now().toString(),
+                rollNo,
+                totalAmount,
+                paidAmount,
+                remainingAmount: totalAmount - paidAmount,
+                status: getStatus(totalAmount, paidAmount),
+                paymentDate,
+                paymentMode,
+                notes
+            };
+
+            feeRecords.push(record);
+
+            localStorage.setItem(
+                "feeRecords",
+                JSON.stringify(feeRecords)
+            );
+
+            message.textContent = "Fee record saved successfully!";
+            message.style.color = "#047857";
+
+            form.reset();
+            document.getElementById("paidAmount").value = 0;
+            document.getElementById("paymentDate").value =
+                new Date().toLocaleDateString("en-CA");
+
+            renderFees();
+        });
+
+        search.addEventListener("input", renderFees);
+
+        renderFees();
+    </script>
+</body>
+</html>
